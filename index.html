@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>T-SQL Typing Quiz — 100 câu</title>
+  <style>
+    :root{--pink:#ff6fa3;--soft:#fff7fb;--blue:#6fb4ff;--muted:#6b7280;--card:#ffffffcc}
+    *{box-sizing:border-box;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,#fff7fb 0%, #e8f6ff 100%);color:#0b1220}
+    .wrap{max-width:1000px;margin:18px auto;padding:18px}
+    header{display:flex;align-items:center;gap:16px}
+    h1{margin:0;color:var(--pink);font-size:22px}
+    p.lead{margin:2px 0 0;color:var(--muted)}
+    .card{background:var(--card);border-radius:14px;padding:16px;margin-top:14px;box-shadow:0 8px 30px rgba(15,23,42,0.06)}
+    .top{display:flex;gap:12px;align-items:center}
+    .score{margin-left:auto;display:flex;gap:8px;align-items:center}
+    .badge{background:linear-gradient(90deg,var(--pink),var(--blue));color:white;padding:6px 10px;border-radius:999px;font-weight:700}
+    .question{margin-top:12px;font-size:16px}
+    .prompt{background:#fff0f6;border:1px dashed rgba(0,0,0,0.03);padding:12px;border-radius:10px;font-family:ui-monospace,Menlo,monospace}
+    textarea.answer{width:100%;min-height:110px;padding:12px;border-radius:10px;border:2px dashed rgba(0,0,0,0.06);resize:vertical;font-family:ui-monospace,Menlo,monospace;font-size:14px}
+    .controls{display:flex;gap:8px;margin-top:10px;align-items:center}
+    button{cursor:pointer;padding:10px 12px;border-radius:10px;border:none;background:var(--pink);color:white;font-weight:700}
+    button.ghost{background:transparent;border:1px solid rgba(11,18,32,0.06);color:var(--muted)}
+    .muted{color:var(--muted)}
+    .row{display:flex;gap:10px;align-items:center}
+    .progress{height:10px;background:rgba(11,18,32,0.04);border-radius:999px;margin-top:12px;overflow:hidden}
+    .progress > i{display:block;height:100%;background:linear-gradient(90deg,var(--pink),var(--blue));width:0%}
+    .result{margin-top:10px;padding:10px;border-radius:10px;background:linear-gradient(180deg,#ffffff,#fffafc);border:1px solid rgba(0,0,0,0.03)}
+    .hidden{display:none}
+    .cute{font-size:24px;margin-right:8px}
+    footer{margin-top:14px;text-align:center;color:var(--muted);font-size:13px}
+    /* prevent selection for suggestion tokens (but allow on textarea) */
+    .no-select{user-select:none}
+    @media(max-width:720px){.top{flex-direction:column;align-items:flex-start}.score{margin-left:0}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>🎀 T-SQL Typing Quiz — 100 câu</h1>
+        <p class="lead">Ôn các lệnh SELECT, WHERE, GROUP BY, JOIN, INSERT, UPDATE bằng cách gõ câu lệnh T-SQL. Mỗi câu đúng +1 điểm.</p>
+      </div>
+      <div class="score">
+        <div class="muted">Câu: <strong id="qnum">0</strong>/<strong id="qtot">100</strong></div>
+        <div class="badge">Điểm: <span id="score">0</span></div>
+      </div>
+    </header>
+
+    <div class="card">
+      <div class="top">
+        <div class="row"><span class="cute">🧸</span><div class="muted">Chủ đề: <strong id="topic">—</strong></div></div>
+        <div class="muted">Không cho copy/paste — gõ bằng tay để luyện kỹ năng.</div>
+      </div>
+
+      <div class="question" id="question">Nhấn Bắt đầu để vào bộ đề 100 câu.</div>
+      <div class="prompt hidden" id="prompt"></div>
+
+      <textarea id="answer" class="answer" placeholder="Nhập lệnh T-SQL ở đây..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
+
+      <div class="controls">
+        <button id="start">Bắt đầu</button>
+        <button id="submit" class="ghost">Nộp</button>
+		  <button id="next" class="ghost hidden">Tiếp tục</button>
+		  <button id="skip" class="ghost">Bỏ qua</button>
+		  <button id="back" class="ghost">Quay lại</button>
+		  <button id="showHint" class="ghost hidden">Gợi ý</button>
+        <div style="margin-left:auto" class="muted">Phím tắt: Enter nộp — Esc bỏ qua</div>
+      </div>
+
+      <div class="result hidden" id="result"></div>
+
+      <div class="progress"><i id="prog"></i></div>
+
+    </div>
+
+    <footer>Muốn xuất CSV điểm sau khi hoàn tất, nhấn nút xuất khi kết thúc.</footer>
+  </div>
+
+  <script>
+  // ======= Tạo 100 câu động =======
+  const TABLES = ['Employees','Products','Orders','Customers','Sales','Inventory','Departments','Suppliers','Transactions','Users'];
+  const templates = [
+  // ===== SELECT =====
+  {topic:'SELECT', prompt: t=>`Lấy tất cả cột từ bảng Employees.`, tokens:t=>['SELECT','*','FROM','EMPLOYEES']},
+  {topic:'SELECT', prompt: t=>`Lấy cột Name, Id từ bảng Employees.`, tokens:t=>['SELECT','NAME','ID','FROM','EMPLOYEES']},
+  {topic:'SELECT', prompt: t=>`Lấy TOP 5 nhân viên từ Employees.`, tokens:t=>['SELECT','TOP','5','*','FROM','EMPLOYEES']},
+  {topic:'SELECT', prompt: t=>`Lấy các giá trị DISTINCT của DepartmentId từ Employees.`, tokens:t=>['SELECT','DISTINCT','DEPARTMENTID','FROM','EMPLOYEES']},
+  {topic:'SELECT', prompt: t=>`Lấy Name và Salary từ Employees, sắp xếp giảm dần theo Salary.`, tokens:t=>['SELECT','NAME','SALARY','FROM','EMPLOYEES','ORDER','BY','SALARY','DESC']},
+  {topic:'SELECT', prompt: t=>`Lấy ProductName và Price từ Products, sắp xếp theo Price tăng dần.`, tokens:t=>['SELECT','PRODUCTNAME','PRICE','FROM','PRODUCTS','ORDER','BY','PRICE','ASC']},
+  {topic:'SELECT', prompt: t=>`Lấy OrderId và OrderDate từ Orders, sắp xếp theo OrderDate DESC.`, tokens:t=>['SELECT','ORDERID','ORDERDATE','FROM','ORDERS','ORDER','BY','ORDERDATE','DESC']},
+  {topic:'SELECT', prompt: t=>`Lấy CustomerName và City từ Customers.`, tokens:t=>['SELECT','CUSTOMERNAME','CITY','FROM','CUSTOMERS']},
+  {topic:'SELECT', prompt: t=>`Lấy tất cả bản ghi từ bảng Departments.`, tokens:t=>['SELECT','*','FROM','DEPARTMENTS']},
+  {topic:'SELECT', prompt: t=>`Lấy TransactionId và Amount từ Transactions.`, tokens:t=>['SELECT','TRANSACTIONID','AMOUNT','FROM','TRANSACTIONS']},
+
+  // ===== WHERE =====
+  {topic:'WHERE', prompt: t=>`Lấy các sản phẩm có Price > 100 từ Products.`, tokens:t=>['SELECT','*','FROM','PRODUCTS','WHERE','PRICE','>','100']},
+  {topic:'WHERE', prompt: t=>`Lấy các nhân viên có Age >= 30 từ Employees.`, tokens:t=>['SELECT','*','FROM','EMPLOYEES','WHERE','AGE','>=','30']},
+  {topic:'WHERE', prompt: t=>`Lấy các Orders có Status = 'Shipped'.`, tokens:t=>['SELECT','*','FROM','ORDERS','WHERE','STATUS','=','SHIPPED']},
+  {topic:'WHERE', prompt: t=>`Lấy các Customers ở thành phố 'Hanoi'.`, tokens:t=>['SELECT','*','FROM','CUSTOMERS','WHERE','CITY','=','HANOI']},
+  {topic:'WHERE', prompt: t=>`Lấy các Products có Price BETWEEN 50 và 200.`, tokens:t=>['SELECT','*','FROM','PRODUCTS','WHERE','PRICE','BETWEEN','50','AND','200']},
+  {topic:'WHERE', prompt: t=>`Lấy các Employees có Name LIKE 'A%'.`, tokens:t=>['SELECT','*','FROM','EMPLOYEES','WHERE','NAME','LIKE','A%']},
+  {topic:'WHERE', prompt: t=>`Lấy các Orders có OrderDate trong năm 2023.`, tokens:t=>['SELECT','*','FROM','ORDERS','WHERE','YEAR(ORDERDATE)','=', '2023']},
+  {topic:'WHERE', prompt: t=>`Lấy các Customers có Country IN ('USA','UK').`, tokens:t=>['SELECT','*','FROM','CUSTOMERS','WHERE','COUNTRY','IN','(USA,UK)']},
+  {topic:'WHERE', prompt: t=>`Lấy các Products có Stock = 0.`, tokens:t=>['SELECT','*','FROM','PRODUCTS','WHERE','STOCK','=','0']},
+  {topic:'WHERE', prompt: t=>`Lấy Employees chưa có ManagerId (NULL).`, tokens:t=>['SELECT','*','FROM','EMPLOYEES','WHERE','MANAGERID','IS','NULL']},
+
+  // ===== GROUP BY =====
+  {topic:'GROUP BY', prompt: t=>`Đếm số sản phẩm theo CategoryId.`, tokens:t=>['SELECT','CATEGORYID','COUNT','FROM','PRODUCTS','GROUP','BY','CATEGORYID']},
+  {topic:'GROUP BY', prompt: t=>`Tính trung bình Salary theo DepartmentId.`, tokens:t=>['SELECT','DEPARTMENTID','AVG','FROM','EMPLOYEES','GROUP','BY','DEPARTMENTID']},
+  {topic:'GROUP BY', prompt: t=>`Tính tổng Amount theo CustomerId.`, tokens:t=>['SELECT','CUSTOMERID','SUM','FROM','ORDERS','GROUP','BY','CUSTOMERID']},
+  {topic:'GROUP BY', prompt: t=>`Đếm số Order theo Status.`, tokens:t=>['SELECT','STATUS','COUNT','FROM','ORDERS','GROUP','BY','STATUS']},
+  {topic:'GROUP BY', prompt: t=>`Tính AVG(Price) của Products theo SupplierId.`, tokens:t=>['SELECT','SUPPLIERID','AVG','PRICE','FROM','PRODUCTS','GROUP','BY','SUPPLIERID']},
+  {topic:'GROUP BY', prompt: t=>`Đếm số nhân viên mỗi phòng ban.`, tokens:t=>['SELECT','DEPARTMENTID','COUNT','FROM','EMPLOYEES','GROUP','BY','DEPARTMENTID']},
+  {topic:'GROUP BY', prompt: t=>`Đếm số đơn hàng mỗi ngày trong Orders.`, tokens:t=>['SELECT','ORDERDATE','COUNT','FROM','ORDERS','GROUP','BY','ORDERDATE']},
+  {topic:'GROUP BY', prompt: t=>`Tính tổng số lượng bán được theo ProductId trong Sales.`, tokens:t=>['SELECT','PRODUCTID','SUM','QUANTITY','FROM','SALES','GROUP','BY','PRODUCTID']},
+  {topic:'GROUP BY', prompt: t=>`Đếm số Customers theo Country.`, tokens:t=>['SELECT','COUNTRY','COUNT','FROM','CUSTOMERS','GROUP','BY','COUNTRY']},
+  {topic:'GROUP BY', prompt: t=>`Đếm số Users theo Role.`, tokens:t=>['SELECT','ROLE','COUNT','FROM','USERS','GROUP','BY','ROLE']},
+
+  // ===== HAVING =====
+  {topic:'HAVING', prompt: t=>`Đếm Category có COUNT(*) > 10 trong Products.`, tokens:t=>['SELECT','CATEGORYID','COUNT','FROM','PRODUCTS','GROUP','BY','CATEGORYID','HAVING','COUNT','>','10']},
+  {topic:'HAVING', prompt: t=>`DepartmentId có AVG(Salary) > 2000.`, tokens:t=>['SELECT','DEPARTMENTID','AVG','SALARY','FROM','EMPLOYEES','GROUP','BY','DEPARTMENTID','HAVING','AVG','>','2000']},
+  {topic:'HAVING', prompt: t=>`SupplierId có SUM(Price) > 10000.`, tokens:t=>['SELECT','SUPPLIERID','SUM','PRICE','FROM','PRODUCTS','GROUP','BY','SUPPLIERID','HAVING','SUM','>','10000']},
+  {topic:'HAVING', prompt: t=>`CustomerId có COUNT(OrderId) >= 5.`, tokens:t=>['SELECT','CUSTOMERID','COUNT','ORDERID','FROM','ORDERS','GROUP','BY','CUSTOMERID','HAVING','COUNT','>=','5']},
+  {topic:'HAVING', prompt: t=>`ProductId có SUM(Quantity) > 500 trong Sales.`, tokens:t=>['SELECT','PRODUCTID','SUM','QUANTITY','FROM','SALES','GROUP','BY','PRODUCTID','HAVING','SUM','>','500']},
+  {topic:'HAVING', prompt: t=>`Role có COUNT(*) > 3 trong Users.`, tokens:t=>['SELECT','ROLE','COUNT','FROM','USERS','GROUP','BY','ROLE','HAVING','COUNT','>','3']},
+  {topic:'HAVING', prompt: t=>`Country có COUNT(CustomerId) > 20.`, tokens:t=>['SELECT','COUNTRY','COUNT','FROM','CUSTOMERS','GROUP','BY','COUNTRY','HAVING','COUNT','>','20']},
+  {topic:'HAVING', prompt: t=>`DepartmentId có SUM(Bonus) > 1000.`, tokens:t=>['SELECT','DEPARTMENTID','SUM','BONUS','FROM','EMPLOYEES','GROUP','BY','DEPARTMENTID','HAVING','SUM','>','1000']},
+  {topic:'HAVING', prompt: t=>`CategoryId có AVG(Price) > 300.`, tokens:t=>['SELECT','CATEGORYID','AVG','PRICE','FROM','PRODUCTS','GROUP','BY','CATEGORYID','HAVING','AVG','>','300']},
+  {topic:'HAVING', prompt: t=>`Ngày có SUM(Amount) > 5000 trong Transactions.`, tokens:t=>['SELECT','TRANSACTIONDATE','SUM','AMOUNT','FROM','TRANSACTIONS','GROUP','BY','TRANSACTIONDATE','HAVING','SUM','>','5000']},
+
+  // ===== JOIN =====
+  {topic:'JOIN', prompt: t=>`INNER JOIN Employees và Departments theo DepartmentId.`, tokens:t=>['SELECT','FROM','EMPLOYEES','INNER','JOIN','DEPARTMENTS','ON','EMPLOYEES.DEPARTMENTID','=','DEPARTMENTS.ID']},
+  {topic:'JOIN', prompt: t=>`LEFT JOIN Products và Suppliers theo SupplierId.`, tokens:t=>['SELECT','FROM','PRODUCTS','LEFT','JOIN','SUPPLIERS','ON','PRODUCTS.SUPPLIERID','=','SUPPLIERS.ID']},
+  {topic:'JOIN', prompt: t=>`INNER JOIN Orders và Customers theo CustomerId.`, tokens:t=>['SELECT','FROM','ORDERS','INNER','JOIN','CUSTOMERS','ON','ORDERS.CUSTOMERID','=','CUSTOMERS.ID']},
+  {topic:'JOIN', prompt: t=>`INNER JOIN Sales và Products theo ProductId.`, tokens:t=>['SELECT','FROM','SALES','INNER','JOIN','PRODUCTS','ON','SALES.PRODUCTID','=','PRODUCTS.ID']},
+  {topic:'JOIN', prompt: t=>`RIGHT JOIN Orders và Employees theo EmployeeId.`, tokens:t=>['SELECT','FROM','ORDERS','RIGHT','JOIN','EMPLOYEES','ON','ORDERS.EMPLOYEEID','=','EMPLOYEES.ID']},
+  {topic:'JOIN', prompt: t=>`JOIN Users và Roles theo RoleId.`, tokens:t=>['SELECT','FROM','USERS','INNER','JOIN','ROLES','ON','USERS.ROLEID','=','ROLES.ID']},
+  {topic:'JOIN', prompt: t=>`JOIN Inventory và Products theo ProductId.`, tokens:t=>['SELECT','FROM','INVENTORY','INNER','JOIN','PRODUCTS','ON','INVENTORY.PRODUCTID','=','PRODUCTS.ID']},
+  {topic:'JOIN', prompt: t=>`JOIN Transactions và Users theo UserId.`, tokens:t=>['SELECT','FROM','TRANSACTIONS','INNER','JOIN','USERS','ON','TRANSACTIONS.USERID','=','USERS.ID']},
+  {topic:'JOIN', prompt: t=>`LEFT JOIN Orders và Shippers theo ShipperId.`, tokens:t=>['SELECT','FROM','ORDERS','LEFT','JOIN','SHIPPERS','ON','ORDERS.SHIPPERID','=','SHIPPERS.ID']},
+  {topic:'JOIN', prompt: t=>`JOIN Sales, Orders, Customers (3 bảng).`, tokens:t=>['SELECT','FROM','SALES','INNER','JOIN','ORDERS','ON','SALES.ORDERID','=','ORDERS.ID','INNER','JOIN','CUSTOMERS','ON','ORDERS.CUSTOMERID','=','CUSTOMERS.ID']},
+
+  // ===== INSERT =====
+  {topic:'INSERT', prompt: t=>`Chèn nhân viên Name, Age vào Employees.`, tokens:t=>['INSERT','INTO','EMPLOYEES','(','NAME',',','AGE',')','VALUES']},
+  {topic:'INSERT', prompt: t=>`Chèn sản phẩm ProductName, Price vào Products.`, tokens:t=>['INSERT','INTO','PRODUCTS','(','PRODUCTNAME',',','PRICE',')','VALUES']},
+  {topic:'INSERT', prompt: t=>`Chèn khách hàng CustomerName, City vào Customers.`, tokens:t=>['INSERT','INTO','CUSTOMERS','(','CUSTOMERNAME',',','CITY',')','VALUES']},
+  {topic:'INSERT', prompt: t=>`Chèn OrderId, OrderDate vào Orders.`, tokens:t=>['INSERT','INTO','ORDERS','(','ORDERID',',','ORDERDATE',')','VALUES']},
+  {topic:'INSERT', prompt: t=>`Chèn Department Name vào Departments.`, tokens:t=>['INSERT','INTO','DEPARTMENTS','(','NAME',')','VALUES']},
+  {topic:'INSERT', prompt: t=>`Chèn SupplierName, Country vào Suppliers.`, tokens:t=>['INSERT','INTO','SUPPLIERS','(','SUPPLIERNAME',',','COUNTRY',')','VALUES']},
+  {topic:'INSERT', prompt: t=>`Chèn Transaction Amount vào Transactions.`, tokens:t=>['INSERT','INTO','TRANSACTIONS','(','AMOUNT',')','VALUES']},
+  {topic:'INSERT', prompt: t=>`Chèn UserName, Password vào Users.`, tokens:t=>['INSERT','INTO','USERS','(','USERNAME',',','PASSWORD',')','VALUES']},
+  {topic:'INSERT', prompt: t=>`Chèn dữ liệu vào Inventory (ProductId, Quantity).`, tokens:t=>['INSERT','INTO','INVENTORY','(','PRODUCTID',',','QUANTITY',')','VALUES']},
+  {topic:'INSERT', prompt: t=>`Chèn dữ liệu vào Sales (OrderId, ProductId, Quantity).`, tokens:t=>['INSERT','INTO','SALES','(','ORDERID',',','PRODUCTID',',','QUANTITY',')','VALUES']},
+
+  // ===== UPDATE =====
+  {topic:'UPDATE', prompt: t=>`Cập nhật Salary = 0 cho Employees có Age > 60.`, tokens:t=>['UPDATE','EMPLOYEES','SET','SALARY','=','0','WHERE','AGE','>','60']},
+  {topic:'UPDATE', prompt: t=>`Cập nhật Price = Price * 1.1 cho Products.`, tokens:t=>['UPDATE','PRODUCTS','SET','PRICE','=','PRICE','*','1.1']},
+  {topic:'UPDATE', prompt: t=>`Cập nhật City = 'HCM' cho Customers có Country = 'Vietnam'.`, tokens:t=>['UPDATE','CUSTOMERS','SET','CITY','=','HCM','WHERE','COUNTRY','=','VIETNAM']},
+  {topic:'UPDATE', prompt: t=>`Cập nhật Status = 'Cancelled' cho Orders có OrderId = 100.`, tokens:t=>['UPDATE','ORDERS','SET','STATUS','=','CANCELLED','WHERE','ORDERID','=','100']},
+  {topic:'UPDATE', prompt: t=>`Cập nhật Stock = 0 cho Products hết hàng.`, tokens:t=>['UPDATE','PRODUCTS','SET','STOCK','=','0','WHERE','STOCK','=','0']},
+  {topic:'UPDATE', prompt: t=>`Cập nhật Bonus = 500 cho Employees có DepartmentId = 2.`, tokens:t=>['UPDATE','EMPLOYEES','SET','BONUS','=','500','WHERE','DEPARTMENTID','=','2']},
+  {topic:'UPDATE', prompt: t=>`Cập nhật Country = 'USA' cho Suppliers có SupplierId = 1.`, tokens:t=>['UPDATE','SUPPLIERS','SET','COUNTRY','=','USA','WHERE','SUPPLIERID','=','1']},
+  {topic:'UPDATE', prompt: t=>`Cập nhật Password cho UserId = 10.`, tokens:t=>['UPDATE','USERS','SET','PASSWORD','=','NEWPASS','WHERE','USERID','=','10']},
+  {topic:'UPDATE', prompt: t=>`Cập nhật Quantity = Quantity+1 cho Inventory ProductId=5.`, tokens:t=>['UPDATE','INVENTORY','SET','QUANTITY','=','QUANTITY','+','1','WHERE','PRODUCTID','=','5']},
+  {topic:'UPDATE', prompt: t=>`Cập nhật Amount = 0 cho TransactionId=99.`, tokens:t=>['UPDATE','TRANSACTIONS','SET','AMOUNT','=','0','WHERE','TRANSACTIONID','=','99']}
+];
+
+
+  // Build 100 questions by iterating tables and templates
+  const QUESTIONS = [];
+  for(let i=0;i<TABLES.length;i++){
+    const t=TABLES[i];
+    for(let j=0;j<templates.length;j++){
+      QUESTIONS.push({id: QUESTIONS.length+1, topic:templates[j].topic, prompt:templates[j].prompt(t), tokens: templates[j].tokens(t)});
+    }
+  }
+  // ensure length 100 (10 tables * 10 templates = 100)
+
+  // ======= UI refs =======
+  const qtot = document.getElementById('qtot'); const qnum = document.getElementById('qnum'); const topicEl = document.getElementById('topic'); const questionEl = document.getElementById('question'); const promptEl = document.getElementById('prompt'); const answerEl = document.getElementById('answer'); const startBtn = document.getElementById('start'); const submitBtn = document.getElementById('submit'); const skipBtn = document.getElementById('skip'); const hintBtn = document.getElementById('showHint'); const resultEl = document.getElementById('result'); const prog = document.getElementById('prog'); const scoreEl = document.getElementById('score');
+	const backBtn = document.getElementById('back');
+	const nextBtn = document.getElementById('next');
+  let state = {index:0, score:0, finished:false, answers:[]};
+  qtot.innerText = QUESTIONS.length;
+
+  // ======= Anti copy-paste measures =======
+  // disable paste, cut, copy on textarea
+  ['paste','copy','cut','drop'].forEach(ev => answerEl.addEventListener(ev, e=>{ e.preventDefault(); flash("Không cho phép dán. Vui lòng gõ tay."); }));
+  // disable right click
+  document.addEventListener('contextmenu', e=>e.preventDefault());
+  // disable Ctrl+V / Cmd+V
+  document.addEventListener('keydown', (e)=>{ if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='v'){ e.preventDefault(); flash('Không cho phép dán (Ctrl/Cmd+V)'); } });
+  // prevent selection of prompt tokens (not textarea)
+  promptEl.classList.add('no-select');
+  // ======= Cấm copy toàn trang =======
+	document.addEventListener('copy', e => {
+	  e.preventDefault();
+	  alert('🚫 Không được copy nội dung trang!');
+	});
+	document.addEventListener('cut', e => {
+	  e.preventDefault();
+	  alert('🚫 Không được cắt nội dung trang!');
+	});
+	document.addEventListener('paste', e => {
+	  e.preventDefault();
+	  alert('🚫 Không được dán vào trang!');
+	});
+	// cấm chọn text
+	document.addEventListener('selectstart', e => {
+	  e.preventDefault();
+	});
+	// cấm chuột phải
+	document.addEventListener('contextmenu', e => e.preventDefault());
+
+  function flash(msg){
+    resultEl.classList.remove('hidden'); resultEl.innerHTML = `<strong>${msg}</strong>`; setTimeout(()=>{ if(!state.finished) resultEl.classList.add('hidden'); },1200);
+  }
+
+  // ======= Normalization & checking =======
+  function normalize(s){
+    return s.replace(/\s+/g,' ').trim().toUpperCase();
+  }
+
+  // helper escape for regex
+  function escapeRegExp(s){
+    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  // soft check: require SELECT + FROM + table present, and all required columns (in any order)
+  function checkAnswer(user, q){
+	  const u = normalize(user);
+
+	  // Loại câu lệnh
+	  if(/^SELECT\b/.test(u)){
+		if(!/\bFROM\b/.test(u)) return false;
+
+		// Tìm bảng
+		const upperTables = TABLES.map(t=>t.toUpperCase());
+		let table = upperTables.find(t => u.includes(t));
+		if(!table) return false;
+
+		// Nếu yêu cầu cột
+		const SQL_KEYWORDS = new Set(['SELECT','FROM','WHERE','GROUP','BY','HAVING','ORDER','INNER','LEFT','RIGHT','JOIN','ON','INSERT','INTO','VALUES','UPDATE','SET']);
+		const requiredCols = q.tokens.filter(tk=>{
+		  const tkStr = String(tk).toUpperCase();
+		  return !SQL_KEYWORDS.has(tkStr) && tkStr!==table && tkStr!=='*' && !/^[\(\)\.,=<>0-9]+$/.test(tkStr);
+		});
+
+		if(requiredCols.length===0) return true;
+		if(/\*/.test(u)) return true;
+
+		return requiredCols.every(col => new RegExp('\\b'+col+'\\b','i').test(u));
+	  }
+
+	  if(/^INSERT\b/.test(u)){
+		if(!/\bINTO\b/.test(u) || !/\bVALUES\b/.test(u)) return false;
+		// bảng
+		const upperTables = TABLES.map(t=>t.toUpperCase());
+		let table = upperTables.find(t => u.includes(t));
+		if(!table) return false;
+		// cột
+		for(const tk of q.tokens){
+		  const tkStr = String(tk).toUpperCase();
+		  if(tkStr==='NAME' || tkStr==='PRICE'){
+			if(!new RegExp('\\b'+tkStr+'\\b','i').test(u)) return false;
+		  }
+		}
+		return true;
+	  }
+
+	  if(/^UPDATE\b/.test(u)){
+		if(!/\bSET\b/.test(u)) return false;
+		return true;
+	  }
+
+	  return false;
+	}
+
+
+  // ======= Navigation =======
+  function render(){
+    if(state.index >= QUESTIONS.length){ finish(); return; }
+    const q = QUESTIONS[state.index];
+    qnum.innerText = state.index+1; topicEl.innerText = q.topic; questionEl.innerText = `Câu ${q.id}: ${q.prompt}`;
+    promptEl.textContent = "Ví dụ: hãy gõ lệnh T-SQL tương ứng. (Không dán)"; promptEl.classList.remove('hidden');
+    answerEl.value = '';
+    answerEl.focus(); resultEl.classList.add('hidden');
+    updateProgress();
+  }
+
+  /*function submitAnswer(){
+    if(state.index>=QUESTIONS.length) return; const q=QUESTIONS[state.index]; const user=answerEl.value;
+    if(!user.trim()){ flash('Bạn chưa nhập câu lệnh.'); return; }
+    const correct = checkAnswer(user,q);
+    state.answers.push({qid:q.id, user: user, correct});
+    if(correct){ state.score +=1; scoreEl.innerText = state.score; resultEl.classList.remove('hidden'); resultEl.innerHTML = `<div style="color:green;font-weight:700">Đúng! +1</div><div class="muted">Ý chính: ${q.tokens.join(' ')}</div>`; }
+    else { resultEl.classList.remove('hidden'); resultEl.innerHTML = `<div style="color:#ef4444;font-weight:700">Sai</div><div class="muted">Gợi ý: Các thành phần cần có — ${q.tokens.join(' ')}</div><div style="margin-top:6px"><small class="muted">(Hệ thống kiểm tra bằng việc tìm các từ khóa; viết đầy đủ cú pháp T-SQL)</small></div>`; }
+    state.index +=1;
+    setTimeout(render, 800);
+  }*/
+  function submitAnswer(){
+  if(state.index>=QUESTIONS.length) return;
+  const q=QUESTIONS[state.index]; 
+  const user=answerEl.value;
+  if(!user.trim()){ flash('Bạn chưa nhập câu lệnh.'); return; }
+
+  const correct = checkAnswer(user,q);
+  state.answers[state.index] = {qid:q.id, user:user, correct};
+
+  if(correct){
+    state.score +=1; 
+    scoreEl.innerText = state.score; 
+    resultEl.classList.remove('hidden'); 
+    resultEl.innerHTML = `<div style="color:green;font-weight:700">Đúng! +1</div><div class="muted">Ý chính: ${q.tokens.join(' ')}</div>`;
+  } else {
+    resultEl.classList.remove('hidden'); 
+    resultEl.innerHTML = `<div style="color:#ef4444;font-weight:700">Sai</div><div class="muted">Gợi ý: ${q.tokens.join(' ')}</div>`;
+  }
+
+  // Ẩn submit, hiện next
+  submitBtn.classList.add('hidden');
+  nextBtn.classList.remove('hidden');
+}
+function next(){
+  state.index += 1;
+  submitBtn.classList.remove('hidden');
+  nextBtn.classList.add('hidden');
+  render();
+}
+function back(){
+  if(state.index>0){
+    state.index -= 1;
+    render();
+  }
+}
+nextBtn.addEventListener('click', next);
+backBtn.addEventListener('click', back);
+
+  function skip(){ state.answers.push({qid: QUESTIONS[state.index].id, user:'', correct:false}); state.index+=1; render(); }
+
+  function finish(){ state.finished = true; questionEl.innerText = 'Hoàn thành bộ đề!'; promptEl.classList.add('hidden'); answerEl.classList.add('hidden'); submitBtn.disabled=true; skipBtn.disabled=true; hintBtn.disabled=true; startBtn.textContent='Chơi lại'; resultEl.classList.remove('hidden'); resultEl.innerHTML = `<div style="font-size:18px">🎉 Bạn được <strong>${state.score}</strong> / ${QUESTIONS.length} điểm</div><div style="margin-top:8px"><button id="export">Xuất CSV kết quả</button></div>`;
+    // attach export handler
+    document.getElementById('export').addEventListener('click', exportCSV);
+    updateProgress(true);
+  }
+
+  function exportCSV(){
+    const rows = [['qid','user','correct']].concat(state.answers.map(a=>[a.qid, '"'+(a.user.replace(/"/g,'""'))+'"', a.correct]));
+    const csv = rows.map(r=>r.join(',')).join('\n');
+    const blob = new Blob([csv], {type:'text/csv'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'tsql_quiz_results.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  }
+
+  function updateProgress(final=false){
+    const pct = Math.round((state.index/QUESTIONS.length)*100);
+    document.getElementById('prog').style.width = (final?100:pct) + '%';
+  }
+
+  // ======= Events =======
+  startBtn.addEventListener('click', ()=>{
+    // reset
+    state = {index:0, score:0, finished:false, answers:[]}; scoreEl.innerText = 0; answerEl.classList.remove('hidden'); submitBtn.disabled=false; skipBtn.disabled=false; hintBtn.disabled=false; startBtn.textContent='Đang chơi...'; render();
+  });
+
+  submitBtn.addEventListener('click', submitAnswer);
+  skipBtn.addEventListener('click', skip);
+  hintBtn.addEventListener('click', ()=>{ const q=QUESTIONS[state.index]; resultEl.classList.remove('hidden'); resultEl.innerHTML=`<div class="muted">Gợi ý các thành phần: <strong>${q.tokens.join(' ')}</strong></div>`; });
+
+  answerEl.addEventListener('keydown',(e)=>{ if(e.key==='Enter' && (e.ctrlKey||e.metaKey)){ // allow ctrl+enter to insert newline
+      return; }
+    if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); submitAnswer(); }
+    if(e.key==='Escape'){ e.preventDefault(); skip(); }
+  });
+
+  // init small helper
+  (function init(){ qtot.innerText = QUESTIONS.length; qnum.innerText = 0; scoreEl.innerText = 0; updateProgress(); })();
+
+  </script>
+</body>
+</html>
