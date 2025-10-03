@@ -170,17 +170,26 @@
 
   // Build 100 questions by iterating tables and templates
   // Build đúng 100 questions (10 bảng × 10 mẫu)
+function shuffle(array) {
+  return array
+    .map(x => ({ val: x, sort: Math.random() }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(x => x.val);
+}
+
 const QUESTIONS = [];
-for (let i = 0; i < TABLES.length; i++) {
-  const t = TABLES[i];
-  for (let j = 0; j < 10; j++) { // chỉ lấy 10 mẫu đầu tiên
+for (let i = 0; i < 10; i++) {
+  // Lấy 10 mẫu ngẫu nhiên từ templates (không trùng trong cùng bảng)
+  const sampleTemplates = shuffle(templates).slice(0, 10);
+  
+  sampleTemplates.forEach(t => {
     QUESTIONS.push({
       id: QUESTIONS.length + 1,
-      topic: templates[j].topic,
-      prompt: templates[j].prompt(t),
-      tokens: templates[j].tokens(t)
+      topic: t.topic,
+      prompt: t.prompt(TABLES[i]),
+      tokens: t.tokens
     });
-  }
+  });
 }
   // ensure length 100 (10 tables * 10 templates = 100)
 
@@ -420,5 +429,6 @@ backBtn.addEventListener('click', back);
   </script>
 </body>
 </html>
+
 
 
