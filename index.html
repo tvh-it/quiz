@@ -327,8 +327,8 @@ for (let i = 0; i < 10; i++) {
     if(!user.trim()){ flash('Bạn chưa nhập câu lệnh.'); return; }
     const correct = checkAnswer(user,q);
     state.answers.push({qid:q.id, user: user, correct});
-    if(correct){ state.score +=1; scoreEl.innerText = state.score; resultEl.classList.remove('hidden'); resultEl.innerHTML = `<div style="color:green;font-weight:700">Đúng! +1</div><div class="muted">Ý chính: ${q.tokens.join(' ')}</div>`; }
-    else { resultEl.classList.remove('hidden'); resultEl.innerHTML = `<div style="color:#ef4444;font-weight:700">Sai</div><div class="muted">Gợi ý: Các thành phần cần có — ${q.tokens.join(' ')}</div><div style="margin-top:6px"><small class="muted">(Hệ thống kiểm tra bằng việc tìm các từ khóa; viết đầy đủ cú pháp T-SQL)</small></div>`; }
+    if(correct){ state.score +=1; scoreEl.innerText = state.score; resultEl.classList.remove('hidden'); resultEl.innerHTML = `<div style="color:green;font-weight:700">Đúng! +1</div><div class="muted">Ý chính: </div>`; }
+    else { resultEl.classList.remove('hidden'); resultEl.innerHTML = `<div style="color:#ef4444;font-weight:700">Sai</div><div class="muted">Gợi ý: Các thành phần cần có — </div><div style="margin-top:6px"><small class="muted">(Hệ thống kiểm tra bằng việc tìm các từ khóa; viết đầy đủ cú pháp T-SQL)</small></div>`; }
     state.index +=1;
     setTimeout(render, 800);
   }*/
@@ -415,7 +415,7 @@ backBtn.addEventListener('click', back);
 
   submitBtn.addEventListener('click', submitAnswer);
   skipBtn.addEventListener('click', skip);
-  hintBtn.addEventListener('click', ()=>{ const q=QUESTIONS[state.index]; resultEl.classList.remove('hidden'); resultEl.innerHTML=`<div class="muted">Gợi ý các thành phần: <strong>${q.tokens.join(' ')}</strong></div>`; });
+  hintBtn.addEventListener('click', ()=>{ const q=QUESTIONS[state.index]; resultEl.classList.remove('hidden'); resultEl.innerHTML=`<div class="muted">Gợi ý các thành phần: <strong></strong></div>`; });
 
   answerEl.addEventListener('keydown',(e)=>{ if(e.key==='Enter' && (e.ctrlKey||e.metaKey)){ // allow ctrl+enter to insert newline
       return; }
@@ -429,6 +429,7 @@ backBtn.addEventListener('click', back);
   </script>
 </body>
 </html>
+
 
 
 
