@@ -281,14 +281,31 @@
 
   // ======= Navigation =======
   function render(){
-    if(state.index >= QUESTIONS.length){ finish(); return; }
-    const q = QUESTIONS[state.index];
-    qnum.innerText = state.index+1; topicEl.innerText = q.topic; questionEl.innerText = `Câu ${q.id}: ${q.prompt}`;
-    promptEl.textContent = "Ví dụ: hãy gõ lệnh T-SQL tương ứng. (Không dán)"; promptEl.classList.remove('hidden');
+  if(state.index >= QUESTIONS.length){ finish(); return; }
+
+  const q = QUESTIONS[state.index];
+  qnum.innerText = state.index+1;
+  topicEl.innerText = q.topic;
+  questionEl.innerText = `Câu ${q.id}: ${q.prompt}`;
+  promptEl.textContent = "Ví dụ: hãy gõ lệnh T-SQL tương ứng. (Không dán)";
+  promptEl.classList.remove('hidden');
+
+  // Nếu đã có câu trả lời trước đó thì hiển thị lại
+  if(state.answers[state.index]){
+    answerEl.value = state.answers[state.index].user || '';
+  } else {
     answerEl.value = '';
-    answerEl.focus(); resultEl.classList.add('hidden');
-    updateProgress();
   }
+
+  answerEl.focus();
+  resultEl.classList.add('hidden');
+
+  // Reset lại nút
+  submitBtn.classList.remove('hidden');
+  nextBtn.classList.add('hidden');
+
+  updateProgress();
+}
 
   /*function submitAnswer(){
     if(state.index>=QUESTIONS.length) return; const q=QUESTIONS[state.index]; const user=answerEl.value;
@@ -330,15 +347,31 @@ function next(){
   render();
 }
 function back(){
-  if(state.index>0){
+  if(state.index > 0){
     state.index -= 1;
     render();
+
+    const prevAnswer = state.answers[state.index];
+    if(prevAnswer){
+      resultEl.classList.remove('hidden');
+      if(prevAnswer.correct){
+        resultEl.innerHTML = `<div style="color:green;font-weight:700">Đúng! +1</div>`;
+      } else {
+        resultEl.innerHTML = `<div style="color:#ef4444;font-weight:700">Sai</div>`;
+      }
+
+      // Ẩn submit, hiện next nếu đã nộp
+      submitBtn.classList.add('hidden');
+      nextBtn.classList.remove('hidden');
+    }
   }
 }
 nextBtn.addEventListener('click', next);
 backBtn.addEventListener('click', back);
 
-  function skip(){ state.answers.push({qid: QUESTIONS[state.index].id, user:'', correct:false}); state.index+=1; render(); }
+  function skip(){ state.answers[state.index] = {qid: QUESTIONS[state.index].id, user:'', correct:false};
+  state.index += 1;
+  render(); }
 
   function finish(){ state.finished = true; questionEl.innerText = 'Hoàn thành bộ đề!'; promptEl.classList.add('hidden'); answerEl.classList.add('hidden'); submitBtn.disabled=true; skipBtn.disabled=true; hintBtn.disabled=true; startBtn.textContent='Chơi lại'; resultEl.classList.remove('hidden'); resultEl.innerHTML = `<div style="font-size:18px">🎉 Bạn được <strong>${state.score}</strong> / ${QUESTIONS.length} điểm</div><div style="margin-top:8px"><button id="export">Xuất CSV kết quả</button></div>`;
     // attach export handler
@@ -381,3 +414,4 @@ backBtn.addEventListener('click', back);
   </script>
 </body>
 </html>
+
