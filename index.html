@@ -345,10 +345,10 @@ for (let i = 0; i < 10; i++) {
     state.score +=1; 
     scoreEl.innerText = state.score; 
     resultEl.classList.remove('hidden'); 
-    resultEl.innerHTML = `<div style="color:green;font-weight:700">Đúng! +1</div><div class="muted">Ý chính: ${q.tokens.join(' ')}</div>`;
+    resultEl.innerHTML = `<div style="color:green;font-weight:700">Đúng! +1</div><div class="muted">Ý chính: }</div>`;
   } else {
     resultEl.classList.remove('hidden'); 
-    resultEl.innerHTML = `<div style="color:#ef4444;font-weight:700">Sai</div><div class="muted">Gợi ý: ${q.tokens.join(' ')}</div>`;
+    resultEl.innerHTML = `<div style="color:#ef4444;font-weight:700">Sai</div><div class="muted">Gợi ý: }</div>`;
   }
 
   // Ẩn submit, hiện next
@@ -429,6 +429,7 @@ backBtn.addEventListener('click', back);
   </script>
 </body>
 </html>
+
 
 
 
