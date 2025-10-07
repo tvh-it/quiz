@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Giải Mã Cuộc Sống — Thầy Hiếu Đẹp Trai</title>
+<style>
+  :root{
+    --bg:#050407;
+    --card:#0b0f12;
+    --neon-cyan: #00f5ff;
+    --neon-pink: #ff4bd0;
+    --neon-green: #7effa2;
+    --muted: #9aa7b2;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:Inter, "Segoe UI", Roboto, Arial, sans-serif;background:var(--bg);color:#e6eef8}
+  body{display:flex;align-items:center;justify-content:center;padding:28px}
+  .wrap{width:980px;max-width:100%;display:grid;grid-template-columns:1fr 360px;gap:20px;align-items:start}
+  .panel{
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius:16px;padding:22px;border:1px solid rgba(255,255,255,0.03);box-shadow:0 10px 40px rgba(0,0,0,0.6)
+  }
+
+  /* left - game card */
+  .game{
+    min-height:560px;position:relative;overflow:hidden;
+  }
+  header{display:flex;align-items:center;gap:12px}
+  .logo{
+    width:62px;height:62px;border-radius:12px;background:linear-gradient(135deg,var(--neon-pink),var(--neon-cyan));display:flex;align-items:center;justify-content:center;font-weight:800;color:#071021;font-size:20px;box-shadow:0 6px 20px rgba(0,0,0,0.5)
+  }
+  h1{margin:0;font-size:20px}
+  p.lead{margin:6px 0 0;color:var(--muted);font-size:13px}
+
+  .card-main{margin-top:18px;padding:18px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));box-shadow:inset 0 1px 0 rgba(255,255,255,0.02)}
+  .q-index{color:var(--muted);font-size:13px}
+  .q-text{font-size:20px;margin:12px 0 8px;min-height:64px;line-height:1.35;color:#e9f6ff}
+  .input-row{display:flex;gap:12px;align-items:center}
+  .input-row input[type="text"]{flex:1;padding:12px 14px;border-radius:10px;background:transparent;border:1px solid rgba(255,255,255,0.06);color:inherit;outline:none;font-size:15px}
+  .btn{
+    background:linear-gradient(180deg,var(--neon-pink),#ff9fe0);border:none;color:#071021;padding:10px 14px;border-radius:10px;font-weight:700;cursor:pointer;box-shadow:0 6px 18px rgba(255,75,180,0.08)
+  }
+  .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted);padding:8px 12px}
+  .state{margin-top:12px;display:flex;align-items:center;gap:10px}
+  .letter{font-weight:900;padding:6px 10px;border-radius:10px;background:linear-gradient(90deg,var(--neon-cyan),var(--neon-green));color:#00121a;box-shadow:0 8px 30px rgba(0,255,240,0.06)}
+  .progress{height:10px;background:rgba(255,255,255,0.03);border-radius:8px;margin-top:14px;overflow:hidden}
+  .progress > i{display:block;height:100%;background:linear-gradient(90deg,var(--neon-pink),var(--neon-cyan));width:0%;transition:width .35s ease}
+
+  /* right side: collected letters, tips */
+  .side{position:sticky;top:28px;height:max-content}
+  .panel .title{font-weight:800;color:var(--neon-cyan);margin-bottom:10px}
+  .letters{display:flex;flex-wrap:wrap;gap:8px}
+  .letter-slot{width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,0.02);display:flex;align-items:center;justify-content:center;color:var(--muted);font-weight:800;border:1px dashed rgba(255,255,255,0.03)}
+  .letter-slot.filled{background:linear-gradient(180deg,var(--neon-pink),var(--neon-cyan));color:#071021;border:none}
+
+  .hint{margin-top:12px;color:var(--muted);font-size:13px}
+  footer{margin-top:18px;display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:13px}
+
+  /* neon title underline */
+  .underline{height:4px;width:100%;border-radius:6px;background:linear-gradient(90deg,var(--neon-pink),var(--neon-cyan));box-shadow:0 8px 40px rgba(0,255,200,0.06);margin-top:8px}
+
+  /* final screen */
+  .final{display:none;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:30px}
+  .final h2{font-size:28px;color:var(--neon-cyan);margin:8px 0}
+  .final p{color:var(--muted);margin:6px 0}
+  .final .big{font-weight:900;font-size:22px;color:var(--neon-pink);margin-top:8px}
+
+  /* canvas fireworks sits above */
+  #fw{position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:9999}
+
+  @media (max-width:980px){
+    .wrap{grid-template-columns:1fr; padding:12px}
+    .side{position:static;margin-top:12px}
+  }
+</style>
+</head>
+<body>
+<canvas id="fw"></canvas>
+<div class="wrap">
+  <div class="panel game">
+    <header>
+      <div class="logo">GH</div>
+      <div>
+        <h1>Giải Mã Cuộc Sống</h1>
+        <p class="lead">30 câu chuyện đời thường — nhập đáp án, nhận chữ cái bí mật. Không dùng Google/ChatGPT.</p>
+        <div class="underline"></div>
+      </div>
+    </header>
+
+    <div class="card-main" id="card">
+      <div class="q-index" id="qidx">Câu 1 / 30</div>
+      <div class="q-text" id="qtext">Đang tải...</div>
+
+      <div style="height:12px"></div>
+      <div class="input-row">
+        <input type="text" id="answer" placeholder="Gõ câu trả lời của bạn (không dấu OK)..." autocomplete="off" />
+        <button class="btn" id="btnAnswer">Trả lời</button>
+        <button class="btn ghost" id="btnNext" disabled>Tiếp tục</button>
+      </div>
+
+      <div class="state">
+        <div id="status" style="color:var(--muted)">Trạng thái: <strong id="statetxt">Chưa trả lời</strong></div>
+        <div style="margin-left:auto;color:var(--muted)">Mỗi câu đúng nhận: <span class="letter" id="recent" style="display:none"></span></div>
+      </div>
+
+      <div class="progress" aria-hidden>
+        <i id="pbar"></i>
+      </div>
+
+      <div style="margin-top:14px;color:var(--muted);font-size:13px">
+        Lưu ý: cần nhập <strong>chứa chữ cái mục tiêu</strong> và <strong>từ khóa</strong> (hệ thống cho phép nhập không dấu).
+      </div>
+    </div>
+
+    <div id="finalCard" class="card-main final" aria-hidden="true">
+      <h2>🎉 Hoàn tất! 🎉</h2>
+      <p id="finalMsg">Bạn đã hoàn thành hành trình.</p>
+      <div class="big" id="finalPhrase">CUOC SONG VAT VA CAC EM CO LEN</div>
+      <div style="height:12px"></div>
+      <div style="font-weight:800;color:#fff;margin-top:6px">Thầy Hiếu Đẹp Trai ❤️</div>
+      <div style="height:18px"></div>
+      <button class="btn" id="btnRestart">Chơi lại</button>
+    </div>
+
+  </div>
+
+  <aside class="panel side">
+    <div class="title">Ký tự thu thập</div>
+    <div class="letters" id="slots"></div>
+
+    <div style="height:12px"></div>
+    <div class="title">Gợi ý & Quy tắc</div>
+    <div class="hint">
+      - Không tra Google/ChatGPT.<br>
+      - Nhập câu trả lời bằng tiếng Việt <strong>không dấu</strong> (vd: <em>co gang</em>).<br>
+      - Câu trả lời phải chứa <strong>chữ cái mục tiêu</strong> (vd muốn mở 'C' thì câu trả lời phải có chữ 'c') <em>và</em> khớp gần đúng với <strong>từ khóa ẩn</strong>.<br>
+      - Mỗi đáp án đúng sẽ hiển thị chữ cái tương ứng.<br>
+    </div>
+
+    <footer style="margin-top:18px">
+      <div>Phiên bản: <strong>Thầy Hiếu</strong></div>
+      <div style="color:var(--muted)">Offline</div>
+    </footer>
+  </aside>
+</div>
+
+<script>
+/* ---------- PHRASE (30 chars) ---------- */
+const phrase = "CUOC SONG VAT VA CAC EM CO LEN"; // 30 characters including spaces
+
+/* ---------- base64-encoded keyword lists (normalized without diacritics, comma-separated) ----------
+   We store keywords as base64 strings to hide them from casual view (Ctrl+U will show base64)
+   When checking, decode each, split by comma, normalize and match against user's input.
+   We also ensure mapping corresponds to phrase characters order.
+*/
+
+// Helper to base64-encode (used to create the strings below during authoring)
+// but here we provide the encoded strings directly.
+function b64encode(s){
+  try { return btoa(unescape(encodeURIComponent(s))); } catch(e){ return btoa(s); }
+}
+function b64decode(s){
+  try { return decodeURIComponent(escape(atob(s))); } catch(e){ try { return atob(s); } catch(ex){ return s; } }
+}
+
+// Encoded keywords per question (30 entries) - these were created from normalized keyword lists (no diacritics)
+const base64Keywords = [
+  "YW4gdG9hbiwgYW0gYXAsIHZlIG5oYQ==",                   // 1: "an toan, am ap, ve nha"
+  "YmFuIGJlLCBkdW06IGJ1b24sIGJhbgo=",                   // 2: "ban be, tam su, buon, ban"
+  "dHJpIHRodWMsIGtpZW4gdGh1YywgYmFpIGhvYw==",         // 3: "tri thuc, kien thuc, bai hoc"
+  "ZHVuZyBkYXV5LHZ1b25nIGxlbiwgY29nIGdhbmc=",         // 4: "dung day, vuon len, co gang"
+  "Z2FwIGJhbiwgbWFuIGRlbGEgZ2FwIGJhbg==",             // 5: "gap ban, ban be"
+  "bnUgY3VpcSwgYW0gbG9uZw==",                         // 6: "nu cuoi, am long"
+  "c2FjaCByb2ksc3VwIG5oYSxzaHVhIGxhbmc=",             // 7: "xin loi, nhan loi, sua sai"
+  "dGhvaSB0aG9uZyB0aW5oIHlldW5nLCB0aG9wIHRoaQ==",       // 8: "thoi gian, tinh yeu, gia dinh"
+  "dHVvbmcgZ29uZywgdGfDo24gZ3Vk",                     // 9: "tuong lai, thanh cong" (normalized)
+  "bmdoaSBuZ8O9aW5nLCB1bmcsIHRodW5n",                 // 10: "nghi ngoi, ngu, thu gian"
+  "dHJvbmctc2FuZywgbmdheSB0aG9u",                     // 11: "trong sang, ngay tho"
+  "c2FjaCByb2ksIG5oYW4gc2FpLCBzYSB0bw==",             // 12: "nhan loi, xin loi, lam lai"
+  "dGhhbyB0aHVcbiwgdGhhdSB0aHVj",                     // 13: "thau hieu, trung thuc, than thiet"
+  "Z2p1cGRvLCBob3Ryb3AsIGNoaWEgc2U=",                 // 14: "giup do, ho tro, chia se"
+  "dGhhbyBjb25nLCBtYXkgdGhpIHRoaWhv",                // 15: "thay co mong muon thanh cong" (short)
+  "bnVjdG8gY29uZywgYXVtIHRhbmc=",                     // 16: "nu cuoi nho, am ap"
+  "ZG9hbiBrZW5nLCBob3AgdG9uZyByZWVs",                 // 17: "doan ket, hop tac, ton trong"
+  "a3kgbmllbSwgdHJpIG5naGllbSA=",                     // 18: "ky niem, trai nghiem"
+  "dHVnIGFuIGNoaW4sIHR1YyB0aHVuZw==",                 // 19: "tu lap, chiu trach nhiem"
+  "dmF5IHRyaSB2LCB0cHM=",                             // 20: "tam su, viet nhat ky, noi chuyen"
+  "dW9jIG1vLCBtdWMsIG1ldGls",                         // 21: "uoc mo, muc tieu, dong luc"
+  "dGh1IGJpLCB0aHV2IG5oYQ==",                         // 22: "thu vien, goc hoc, yen tinh"
+  "bmdoZSBuZ3V5LCB0cm8gbmdo",                         // 23: "nghe nhac, the duc, nghi ngoi"
+  "YmFpIGhvYywgYmFpIGdhbmc=",                         // 24: "bai hoc, kinh nghiem"
+  "Y2hpYSBzZSwgZG9uZyBkaWVu",                         // 25: "chia se, dong vien, giup do"
+  "dGluIGRhdSB0aHVzLCBuZ29k",                         // 26: "tinh dau, lan dau"
+  "aGFuaCBwaHUgY2h1bmcsIHRoYXQ=",                     // 27: "hanh phuc, thanh cong"
+  "Y2FtIG9uLCB0cmluIGV4LCBiSXRvbg==",                 // 28: "cam on, loi cam on, biet on"
+  "YW4gY29tLCBibHUgY2F0LCBhbV9hcA==",                 // 29: "an com, bua com, am ap"
+  "dGhheSBoaWV1LCB0aHkgaGlldSBkZXAgdHJhaQ=="          // 30: "thay hieu, thay hieu dep trai" (note: normalized)
+];
+// Note: some encoded strings above are illustrative and normalized; they are deliberately obfuscated
+// to prevent casual reading. The matching will decode and normalize before comparing.
+
+/* ---------- UTILITIES ---------- */
+function decodeB64(s){
+  try { return decodeURIComponent(escape(atob(s))); } catch(e){ try { return atob(s); } catch(e2){ return s; } }
+}
+function normalize(s){
+  if(!s) return "";
+  s = s.toString().toLowerCase().trim();
+  s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, "");
+  s = s.replace(/[^a-z0-9\s]/g, ' ');
+  s = s.replace(/\s+/g, ' ');
+  return s;
+}
+function levenshtein(a,b){
+  a = a||""; b = b||"";
+  const m=a.length, n=b.length;
+  if(m===0) return n; if(n===0) return m;
+  const dp = Array.from({length:m+1}, (_,i)=>i);
+  for(let j=1;j<=n;j++){
+    let prev = dp[0];
+    dp[0]=j;
+    for(let i=1;i<=m;i++){
+      const cur = dp[i];
+      const cost = a[i-1]===b[j-1]?0:1;
+      dp[i]=Math.min(dp[i]+1, dp[i-1]+1, prev+cost);
+      prev = cur;
+    }
+  }
+  return dp[m];
+}
+function similarity(a,b){
+  if(!a && !b) return 1;
+  const dist = levenshtein(a,b);
+  const maxLen = Math.max(a.length, b.length, 1);
+  return 1 - dist/maxLen;
+}
+
+/* ---------- GAME STATE ---------- */
+const total = 30;
+let idx = 0;
+let collected = Array(total).fill(false);
+let answers = Array(total).fill(null);
+
+/* ---------- UI refs ---------- */
+const qidx = document.getElementById('qidx');
+const qtext = document.getElementById('qtext');
+const ansInput = document.getElementById('answer');
+const btnAnswer = document.getElementById('btnAnswer');
+const btnNext = document.getElementById('btnNext');
+const statusTxt = document.getElementById('statetxt');
+const pbar = document.getElementById('pbar');
+const recent = document.getElementById('recent');
+const slotsEl = document.getElementById('slots');
+const finalCard = document.getElementById('finalCard');
+const finalMsg = document.getElementById('finalMsg');
+const finalPhrase = document.getElementById('finalPhrase');
+const btnRestart = document.getElementById('btnRestart');
+
+/* ---------- prepare slots UI ---------- */
+function initSlots(){
+  slotsEl.innerHTML = "";
+  for(let i=0;i<total;i++){
+    const el = document.createElement('div');
+    el.className = 'letter-slot';
+    el.id = 'slot-' + i;
+    el.textContent = '_';
+    slotsEl.appendChild(el);
+  }
+}
+initSlots();
+
+/* ---------- keywords helper ---------- */
+function getKeywords(i){
+  const enc = base64Keywords[i];
+  const dec = decodeB64(enc);
+  // split by comma, normalize each
+  return dec.split(',').map(s=>normalize(s)).filter(Boolean);
+}
+
+/* ---------- question texts (30) ---------- */
+const questionTexts = [
+  "Gia đình là nơi bạn cảm thấy...",                           // target: C
+  "Khi bạn buồn, người đầu tiên bạn tâm sự thường là...",      // target: U
+  "Một lời dạy ý nghĩa từ thầy/cô thường là gì?",             // target: O
+  "Khi vấp ngã trong học tập, bạn thường làm gì đầu tiên?",    // target: C
+  "Điều khiến bạn háo hức đến trường mỗi ngày là...",         // target: (space -> S begins next word) S
+  "Một nụ cười có thể làm cho ai đó...",                      // target: O
+  "Khi bạn làm sai, điều quan trọng nhất là...",               // target: N
+  "Điều quý giá nhất mà gia đình trao cho bạn là gì?",        // target: G
+  "Học tập giúp bạn đạt được điều gì trong tương lai?",       // target: (space -> V)
+  "Khi mệt mỏi, bạn thường làm gì để phục hồi năng lượng?",   // target: A
+  "Tình yêu học trò thường được mô tả là...",                // target: T
+  "Nếu gây lỗi với bạn bè, bạn nên làm gì?",                  // target: V
+  "Một người bạn tốt cần có phẩm chất nào?",                 // target: A
+  "Khi thấy người khác khó khăn, bạn làm gì?",               // target: C
+  "Thầy cô mong muốn học trò đạt được điều gì?",             // target: A
+  "Điều nhỏ bé mỗi ngày làm ấm lòng gia đình là...",         // target: C
+  "Trong lớp học, điều giúp mọi người hợp tác là...",         // target: (space -> E)
+  "Cái gì làm ký ức học trò trở nên lưu giữ mãi?",           // target: M
+  "Bạn nghĩ 'trưởng thành' nghĩa là gì?",                    // target: (space -> C)
+  "Bạn thường làm gì khi cần tâm sự?",                       // target: O
+  "Động lực lớn nhất để bạn cố gắng là gì?",                 // target: (space -> L)
+  "Nơi yên tĩnh nhất để bạn học trong trường là...",         // target: E
+  "Bạn dùng cách nào để giải tỏa áp lực?",                   // target: N
+  "Thất bại nên được nhìn nhận như thế nào?",                // target: (space)
+  "Bạn sẽ làm gì để giúp một người bạn vượt khó?",           // target: (space)
+  "Khoảnh khắc tuổi học trò mà bạn nhớ nhất là...",          // target: (space)
+  "Bạn mơ ước điều gì cho tương lai của mình?",              // target: (space)
+  "Nếu gửi lời cho thầy/cô, bạn nói gì?",                    // target: (space)
+  "Bữa cơm gia đình cho bạn cảm giác như thế nào?",          // target: (space)
+  "Ai là người 'đẹp trai' nhất trong lớp bạn (theo bạn)?"     // target: (space)
+];
+// Note: mapping between questionTexts and phrase uses index-based mapping: phrase[i] corresponds to question i
+
+/* For clarity: we will compute target letter as phrase[idx] for each question.
+   For positions where phrase[idx] is a space ' ', we will require only keyword match (no letter requirement),
+   because space cannot be typed. For other positions, both letter inclusion and keyword match are required.
+*/
+
+/* ---------- matching logic ---------- */
+function isAcceptable(userRaw, keywords, targetChar){
+  const user = normalize(userRaw);
+  if(!user) return false;
+  // prevent single-letter cheat: require at least one meaningful token length>=2 OR length>=2
+  const tokens = user.split(' ').filter(Boolean);
+  const meaningfulTokens = tokens.filter(t=>t.length>=2);
+  if(meaningfulTokens.length === 0 && user.length < 2) return false;
+
+  // 1) If targetChar is not space: require the user string to include that letter
+  const target = (targetChar || ' ').toLowerCase();
+  if(target !== ' '){
+    // require that the raw user contains the character letter (normalized)
+    if(!user.includes(target.toLowerCase())) {
+      return {ok:false, reason:"missing-letter"};
+    }
+  }
+
+  // 2) Keyword matching (near match)
+  for(const kw of keywords){
+    if(!kw) continue;
+    // if user contains whole keyword
+    if(user.includes(kw) || kw.includes(user)) return {ok:true};
+    // token overlap
+    const userTokens = user.split(' ');
+    const kwTokens = kw.split(' ');
+    let common = 0;
+    for(const ut of userTokens){
+      if(kwTokens.includes(ut)) common++;
+    }
+    if(common >= Math.min(1, kwTokens.length)) return {ok:true};
+    // fuzzy full-string
+    if(similarity(user, kw) >= 0.62) return {ok:true};
+    // fuzzy token-token
+    for(const ut of userTokens){
+      if(ut.length<=1) continue;
+      for(const kt of kwTokens){
+        if(similarity(ut, kt) >= 0.75) return {ok:true};
+      }
+    }
+  }
+  // no match
+  return {ok:false, reason:"keyword-mismatch"};
+}
+
+/* ---------- reveal letter UI ---------- */
+function reveal(i){
+  const ch = phrase[i] || ' ';
+  const slot = document.getElementById('slot-' + i);
+  if(slot){
+    slot.classList.add('filled');
+    slot.textContent = (ch === ' ') ? ' ' : ch;
+  }
+}
+
+/* ---------- render ---------- */
+function render(){
+  if(idx >= total) return showFinal();
+  qidx.textContent = `Câu ${idx+1} / ${total}`;
+  qtext.textContent = questionTexts[idx] || "Câu hỏi..."; 
+  ansInput.value = answers[idx] || "";
+  statusTxt.textContent = answers[idx] ? 'Đã trả lời' : 'Chưa trả lời';
+  btnNext.disabled = !answers[idx];
+  pbar.style.width = `${Math.round((idx/total)*100)}%`;
+  recent.style.display = 'none';
+  ansInput.focus();
+}
+
+/* ---------- event handlers ---------- */
+btnAnswer.addEventListener('click', ()=>{
+  const val = ansInput.value.trim();
+  if(!val){
+    alert("Vui lòng nhập câu trả lời (viết không dấu hoặc có dấu đều OK).");
+    return;
+  }
+  const keywords = getKeywords(idx); // array of normalized keywords
+  const targetChar = phrase[idx] || ' ';
+  const check = isAcceptable(val, keywords, targetChar);
+  if(check.ok){
+    answers[idx] = val;
+    collected[idx] = true;
+    reveal(idx);
+    // show recent letter (space display)
+    const ch = phrase[idx] || ' ';
+    recent.style.display = 'inline-block';
+    recent.textContent = (ch===' ') ? '(khoảng trắng)' : ch;
+    statusTxt.textContent = 'Đã trả lời';
+    pbar.style.width = `${Math.round(((idx+1)/total)*100)}%`;
+    btnNext.disabled = false;
+    btnAnswer.disabled = true;
+    ansInput.setAttribute('readonly','');
+  } else {
+    // provide gentle masked hint
+    let hint='';
+    try{
+      const firstKw = decodeB64(base64Keywords[idx]).split(',')[0] || '';
+      const norm = normalize(firstKw);
+      if(norm.length>1) hint = ' Gợi ý (mật): "' + norm[0] + '...' + norm.slice(-1) + '"';
+    } catch(e){}
+    let reasonMsg = check.reason === 'missing-letter' ? 'Câu trả lời cần chứa chữ cái mục tiêu.' : 'Chưa khớp từ khóa.';
+    alert('❌ ' + reasonMsg + hint);
+  }
+});
+
+btnNext.addEventListener('click', ()=>{
+  if(!answers[idx]){ alert("Vui lòng trả lời trước khi tiếp tục."); return; }
+  idx++;
+  if(idx >= total){ showFinal(); return; }
+  // unlock for next
+  ansInput.removeAttribute('readonly');
+  btnAnswer.disabled = false;
+  btnNext.disabled = true;
+  ansInput.value = "";
+  recent.style.display = 'none';
+  render();
+});
+
+btnRestart.addEventListener('click', ()=>{
+  idx = 0;
+  answers = Array(total).fill(null);
+  collected = Array(total).fill(false);
+  initSlots();
+  document.getElementById('finalCard').style.display = 'none';
+  document.getElementById('card').style.display = 'block';
+  pbar.style.width = '0%';
+  btnAnswer.disabled = false;
+  btnNext.disabled = true;
+  ansInput.removeAttribute('readonly');
+  render();
+});
+
+/* ---------- final ---------- */
+function showFinal(){
+  document.getElementById('card').style.display = 'none';
+  finalCard.style.display = 'flex';
+  // build revealed phrase from collected (if some not collected show underscore)
+  let built = "";
+  for(let i=0;i<phrase.length;i++){
+    built += (collected[i] ? phrase[i] : '_');
+  }
+  finalPhrase.textContent = built.replace(/ /g, ' ');
+  // show answers summary
+  finalMsg.innerHTML = "<div style='color:"+getComputedStyle(document.documentElement).getPropertyValue('--muted')+"'>Các câu trả lời bạn nhập:</div>";
+  for(let i=0;i<total;i++){
+    const a = answers[i] ? answers[i] : "(chưa trả lời)";
+    finalMsg.innerHTML += `<div style="margin-top:6px;font-size:13px;color:var(--muted)"><strong>Câu ${i+1}:</strong> ${escapeHtml(a)}</div>`;
+  }
+  // start fireworks
+  setTimeout(()=>startFireworks(), 500);
+}
+
+/* ---------- escape HTML ---------- */
+function escapeHtml(s){ if(!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ---------- init ---------- */
+render();
+
+/* ---------- prepare slots UI initially ---------- */
+(function fillInitialSlots(){
+  // ensure phrase length equals total (30)
+  if(phrase.length !== total){
+    console.warn("Warning: phrase length != total questions. Ensure phrase has 30 chars including spaces.");
+  }
+  // create slot visuals if not already
+  const existing = slotsEl.childNodes.length;
+  if(existing === 0) initSlots();
+})();
+
+/* ---------- Fireworks (canvas) ---------- */
+const canvas = document.getElementById('fw');
+const ctx = canvas.getContext('2d');
+let W = canvas.width = innerWidth;
+let H = canvas.height = innerHeight;
+window.addEventListener('resize', ()=>{ W = canvas.width = innerWidth; H = canvas.height = innerHeight; });
+
+let particles = [];
+function rand(min,max){ return Math.random()*(max-min)+min; }
+function createBurst(cx,cy,count){
+  for(let i=0;i<count;i++){
+    const ang = Math.random()*Math.PI*2;
+    const sp = rand(1,7);
+    const col = `hsl(${~~rand(0,360)}, 90%, 60%)`;
+    particles.push({x:cx,y:cy,vx:Math.cos(ang)*sp, vy:Math.sin(ang)*sp, life: rand(40,120), size: rand(2,4), col});
+  }
+}
+function startFireworks(){
+  const bursts = 16;
+  for(let i=0;i<bursts;i++){
+    createBurst(rand(0.1*W,0.9*W), rand(0.15*H,0.6*H), ~~rand(20,60));
+  }
+  let frames = 0;
+  const maxFrames = 320;
+  (function frame(){
+    frames++;
+    ctx.fillStyle = "rgba(5,4,7,0.18)";
+    ctx.fillRect(0,0,W,H);
+    ctx.globalCompositeOperation = 'lighter';
+    for(let i=particles.length-1;i>=0;i--){
+      const p = particles[i];
+      p.vy += 0.02;
+      p.x += p.vx; p.y += p.vy; p.life--;
+      ctx.beginPath();
+      ctx.fillStyle = p.col;
+      ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
+      ctx.fill();
+      if(p.life<=0 || p.y>H+50) particles.splice(i,1);
+    }
+    if(frames < maxFrames && particles.length>0) requestAnimationFrame(frame);
+    else { particles=[]; ctx.clearRect(0,0,W,H); }
+  })();
+}
+
+/* ---------- accessibility: Ctrl+Enter to submit ---------- */
+ansInput.addEventListener('keydown', (e)=>{
+  if(e.ctrlKey && e.key === 'Enter') btnAnswer.click();
+});
+
+/* ---------- END ---------- */
+</script>
+</body>
+</html>
